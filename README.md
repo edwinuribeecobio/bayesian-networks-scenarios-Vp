@@ -1,0 +1,136 @@
+# 🚦 Redes de Creencia Bayesiana para la simulación de "Escenarios de la Naturaleza" que soporten la toma de decisiones
+
+Los "Escenarios de Naturaleza" a partir del marco de trabajo de TNFD (Taskforce on Nature-related Financial Disclosures) permiten simular transformaciones críticas en el estado de los impactos, dependencias y riesgos empresariales en relación con el estado de la biodiversidad y la naturaleza. Bajo este enfoque sistémico, la integración de las presiones de un clima cambiante, el aumento de la presión de las actividades humanas y las transiciones del entorno natural en un mismo modelo, fomenta decisiones informadas que aseguran en conjunto la protección de los ecosistemas y la continuidad empresarial a largo plazo.
+
+En este repositorio se compilan las rutinas para la generación de Redes Bayesianas de creencia con base en el marco del proyecto Fibras II con participación del IAVH y Ecopetrol. En estos flujos de trabajo se propuso conectar TNFD y "Positive Nature" que son dos marcos cruciales para que los negocios y mercados estén alineados con la conservación de la naturaleza.
+
+# Dependencias
+* [R](https://cran.r-project.org/mirrors.html)
+
+# Prerequisitos
+El paquete [bnlearn](https://www.bnlearn.com/) (Scutari 2010) permite ejecutar las funciones más importantes para construir redes bayesianas a partir de evidencia y del conocimiento de experto. Antes de ejecutar los scripts, se recomienda preparar la instalación de las librerías necesarias. A continuación se presenta la lista de dependencias y sus respectivas versiones utilizadas al ejecutar el flujo de trabajo.
+
+```R
+
+# Librerías necesarias y sus versiones
+library(bnlearn)      # v5.1
+library(gRain)        # v1.4.6
+library(Rgraphviz)    # v2.56.0
+library(openxlsx)     # v4.2.8.1
+library(readxl)       # v1.5.0
+library(crayon)       # v1.5.3
+library(dplyr)        # v1.2.1
+library(tidyr)        # v1.3.2
+
+# Instalación Rgraphviz
+#https://bioconductor.posit.co/packages/3.20/bioc/html/Rgraphviz.html 
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("Rgraphviz")
+
+```
+---
+# Descripción flujo de análisis
+En síntesis, el flujo de trabajo del proyecto consta de 6 pasos divididos en dos fases.
+![Image](https://github.com/PEM-Humboldt/bayesian-networks-scenarios/blob/479a7c28216863963a62358304f1be711697fe98/Imagenes/Flujo_metodologico_v5.png)
+
+En la **primera fase** (creación del modelo conceptual), los investigadores deben definir conceptualmente la estructura del modelo: qué componentes abarca y cómo son las interacciones entre ellos. Es fundamental que el modelo se desarrolle en co-creación con el conocimiento de múltiples expertos, para lograr una versión más integral de las dinámicas del modelo. Técnicamente, en esta fase no se contemplan flujos de trabajo basados en código, sino talleres participativos guiados por metodologías de co-diseño y co-creación. Como resultado del trabajo del proyecto Fibras II, la versión final del modelo cenpcetual se muestra en la siguiente imagen:
+
+### Modelo conceptual para Fibras II
+![Image](https://github.com/PEM-Humboldt/bayesian-networks-scenarios/blob/9f7336f9aeb3927ebd5ad3060848c9d9e9b0a581/Imagenes/Copia08_10FibrasII_Borrador_sinflechasPaleta2(V5).png)
+
+Los scripts documentados en este repositorio se centran principalmente en la **segunda fase** ("Implementación de Bayesian Belief Networks"), que se encarga de traducir el modelo conceptual a un archivo nativo de redes bayesianas con extensión `.net`. Este formato es compatible con la gran mayoría de los software comerciales y de libre acceso especializados en este tipo de redes.
+
+
+## Ejecución del flujo de trabajo
+En la carpta de **[Scripts](https://github.com/PEM-Humboldt/bayesian-networks-scenarios/tree/f5dac509bc4f5c2c6dae2eaacf237c8bdffeee08/Scripts)** de este repositorio se encuentran dos rutinas que deben ser ejecutadas en el orden especificado.
+
+* [1_CPT_Generation_FibrasII.R](https://github.com/PEM-Humboldt/bayesian-networks-scenarios/blob/583a68c41939d851cd99f7c4978d52d73b3eb63b/Scripts/1_CPT_Generation_FibrasII.R): lee un libro de Excel que contiene definiciones de nodos (Componentes del modelo), estructura de arcos (interaciones entre componentes) y datos de probabilidad condicional (provenientes de talleres con expertos). Para cada nodo que tiene padres (nodos condicionales), construye una Tabla de Probabilidad Condicional (CPT) completa. Las CPTs generadas se escriben nuevamente en el mismo archivo Excel, como nuevas hojas denominadas "CPT_<nodo>".
+
+![Image](https://github.com/PEM-Humboldt/bayesian-networks-scenarios/blob/67e31ecbe2870752f4b6a8c65779cfa8fbbbae96/Imagenes/Flujo1_CPT_Generation_FibrasII.png)
+
+* [2_BBN_Construction_FibrasII.R](https://github.com/PEM-Humboldt/bayesian-networks-scenarios/blob/583a68c41939d851cd99f7c4978d52d73b3eb63b/Scripts/2_BBN_Construction_FibrasII.R): construye la red apartir del libro de excel resultante del script anterior de excel, la ajusta con las distribuciones proporcionadas, visualiza el grafico de nodos, arcos y barras de probabilidad, exporta la red al formato Netica (.net) y proporciona una función para inferencia diagnóstica mediante simulacion de escenarios.
+
+![Image](https://github.com/PEM-Humboldt/bayesian-networks-scenarios/blob/9f7336f9aeb3927ebd5ad3060848c9d9e9b0a581/Imagenes/Flujo2_BBN_Construction_FibrasII.png)
+
+## Archivos necesarios
+Para esta rutina se necesita 2 archivos principales que son nombrados en el código de la siguiente manera:
+```R
+
+# INSUMOS BASE Y RUTAS DE DATOS
+
+# 1. Directorio de trabajo
+setwd('C:/Humboldt_2026/FIBRAS2')
+
+# 2. Archivo principal de la red Bayesiana
+#    Excel con nodos, arcos y datos de probabilidad condicional
+main.excel.path <- "Pruebas/BN_FibrasIIv5.xlsx"
+# Hojas requeridas: Nodos, Arcs, Probs, CPT_<nodo>
+
+# 3. Archivo de línea base
+#    Excel con probabilidades iniciales para nodos marginales
+baseline.path <- "linea_basePC/LineaBase_2020.xlsx"
+# Columnas requeridas: Nodos, Probabilidad
+```
+Para ingresar las tablas de excel correctamente use como plantilla y ejemplo los archivos cargados en la carpeta [Insumos](https://github.com/PEM-Humboldt/bayesian-networks-scenarios/tree/88efe5d36eb38d0170261478d2eef777bd4d37cf/Insumos)
+
+
+## Funciones principales 
+
+| Comando | Descripción | Script |
+| :--- | :--- | :--- |
+| `expand.grid`| Crea una tabla de datos a partir de todas las combinaciones de los factores (estados de los nodos) proporcionados| 1_CPT_Generation_FibrasII.R|
+| `get_prob_data` |Filtra el la hoja de excel 'probs' y devuelve una lista con: score (probabilidad numérica), estado.p (estado del predictor o nodo padre), estado.r (estado de la respuesta o nodo hijo), estado.int.p (estado intermedio del predictor, si aplica) y estado.int.r (estado intermedio de la respuesta, si aplica)|   1_CPT_Generation_FibrasII.R |
+| `bn.fibras` | Construye la estructura de una red bayesiana y sus distribuciones de probabilidad a partir de un libro de Excel con un formato específico | 2_BBN_Construction_FibrasII.R |
+| `custom.fit`| Toma un conjunto de distribuciones especificadas por el usuario y sus parámetros (resultado de la funcion  `bn.fibras`), y los utiliza para construir un objeto bn.fit. Su propósito es especificar una red bayesiana (completa con parámetros, no solo la estructura) utilizando conocimiento experto | 2_BBN_Construction_FibrasII.R |
+| ‎`diagnose_manual` | Realiza inferencia sobre un objeto focal dada las simulaciones en tres variables predictores (ejemplo dummy) |  2_BBN_Construction_FibrasII.R |
+
+---
+
+## Visualización de resultados
+A partir de la ejecución del script [2_BBN_Construction_FibrasII.R](https://github.com/PEM-Humboldt/bayesian-networks-scenarios/blob/583a68c41939d851cd99f7c4978d52d73b3eb63b/Scripts/2_BBN_Construction_FibrasII.R) se obtiene un archivo .net que puede ser visualizado directamente en R, pero más interactivamente en softwares como [Netica](https://www.norsys.com/index.html) o [GeNIe](https://www.bayesfusion.com/genie/). En la carpeta [Resultados](https://github.com/PEM-Humboldt/bayesian-networks-scenarios/tree/88448237274b5b786848581bb99a95df41433f77/Resultados) se encuntra el archivo de la red, el cual se visualiza con las barras de probabilidades de la siguiente manera: 
+
+![Image](https://github.com/PEM-Humboldt/bayesian-networks-scenarios/blob/746e414a6ed888ec173f1679369baf0893d75a44/Imagenes/BN_FibrasIIv5_imagenNetica.png)
+
+
+
+
+
+# Errores comunes
+
+🚨Paquetes no instalados o conflictos entre versiones.
+
+📁 Archivos de entrada no encontrados o rutas incorrectas.
+
+🁙 CTPs incompletas o con una mala distribución de probabilidades donde la suma de probabilidades de las combianciones entre estados no es igual a 1.
+
+🔖 Inconsistencias entre nombres de los nodos en las diferentes hojas del libro de excel.
+
+
+# Autores(as) y contacto
+* **[Edwin Uribe Velasquez](https://github.com/edwinuribeecobio)** - *Investigador Asistente. I. Humboldt* - Contacto: euribe@humboldt.org.co
+* **[Elkin Alexi Noguera Urbano](https://github.com/elkalexno)** - *Investigador Titular. I. Humboldt* -  Contacto: enoguera@humboldt.org.co
+* Maria Alejandra Molina Berbeo  *Investigadora Asistente. I. Humboldt* - Contacto: mmolina@humboldt.org.co 
+* Jessica Sanchez Londoño *Investigadora Asistente. I. Humboldt* - Contacto: jessanchez@humboldt.org.co 
+* Juliana Andrea Cortés *Investigadora Adjunta. I. Humboldt* - Contacto: jcortes@humboldt.org.co
+* Juan Nicolás Corral Gómez *Investigador Adjunto. I. Humboldt* - Contacto: jcorral@humboldt.org.co 
+
+## Licencia
+
+Este proyecto está licenciado bajo la licencia MIT. Para obtener más información, consulte el archivo [LICENCIA](https://github.com/PEM-Humboldt/singularidad-m1-2023/blob/5775e9725df540cf04fb170b167f19b88f00bedf/LICENSE). 
+
+
+
+# Referencias al paquete usado
+
+Funciones de referencia: https://www.bnlearn.com/
+
+Software de referencia y tutoriales:  https://www.norsys.com/index.html
+
+# Referencias bibliográficas
+* Bondé, L., Assis, J. C., Benavides-Gordillo, S., Canales-Gomez, E., Fajardo, J., Marrón-Becerra, A., Noguera-Urbano, E. A., Weidlich, E. W. A., & Ament, J. M. (2020). Scenario-modelling for the sustainable management of non-timber forest products in tropical ecosystems. Biota Neotropica, 20(suppl 1), e20190898. [https://doi.org/10.1590/1676-0611-bn-2019-0898](https://doi.org/10.1590/1676-0611-BN-2019-0898)
+* Nagarajan, R., Scutari, M., & Lèbre, S. (2013). Bayesian networks in R: with applications in systems biology. [Springer](https://link.springer.com/book/10.1007/978-1-4614-6446-4). 
+* Scutari, M. (2010). Learning Bayesian Networks with the bnlearn R Package. [Journal of Statistical Software, 35(3), 1–22](https://doi.org/10.18637/jss.v035.i03).
+
+
